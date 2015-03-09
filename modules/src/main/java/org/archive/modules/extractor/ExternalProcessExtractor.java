@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -23,6 +24,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.archive.modules.CrawlURI;
+import org.archive.spring.KeyedProperties;
 import org.json.simple.JSONArray;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -34,16 +36,26 @@ public class ExternalProcessExtractor extends ExtractorHTML {
 	private static Logger logger =
             Logger.getLogger(ExtractorHTML.class.getName());
 
-    private static String addr = "http://localhost:3000/extract";
+	{
+        setAddress("http://localhost:3000/extract");
+    }
+    public String getAddress() {
+        return (String) kp.get("address");
+    }
+    public void setAddress(String address) {
+        kp.put("address", address); 
+    }
+    
 	private JSONParser jsonParser = new JSONParser();
     
 	protected void extract(CrawlURI curi, CharSequence cs) {
 		
+		System.out.println(getAddress());
+		
 		try {
-            URL url = new URL(addr);
             
             CloseableHttpClient httpclient = HttpClients.createDefault();
-            HttpPost httpPost = new HttpPost(addr);
+            HttpPost httpPost = new HttpPost(getAddress());
             
             List<BasicNameValuePair> params = new ArrayList<BasicNameValuePair>(2);
             params.add(new BasicNameValuePair("url", URLEncoder.encode(curi.toString(), "UTF-8")));
@@ -52,7 +64,6 @@ public class ExternalProcessExtractor extends ExtractorHTML {
             httpPost.setEntity(new UrlEncodedFormEntity(params, "UTF-8"));
             
             HttpResponse response = httpclient.execute(httpPost);
-            HttpEntity entity = response.getEntity();
             
             BufferedReader rd = new BufferedReader(
                     new InputStreamReader(response.getEntity().getContent()));
